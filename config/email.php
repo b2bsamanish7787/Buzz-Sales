@@ -1,10 +1,29 @@
 <?php
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_USERNAME', 'noreply@buzznation.com');
-define('SMTP_PASSWORD', '');
-define('SMTP_FROM_EMAIL', 'noreply@buzznation.com');
-define('SMTP_FROM_NAME', 'Buzznation Portal');
+/**
+ * Email configuration.
+ *
+ * sendEmail() uses PHP's built-in mail() function which relies on the server's
+ * sendmail/MTA configuration.  For production deployments that require SMTP
+ * authentication (e.g. Gmail, SendGrid, Mailgun) replace the mail() call with
+ * a dedicated library such as PHPMailer or Symfony Mailer and populate the
+ * constants below via environment variables:
+ *
+ *   SMTP_HOST      – SMTP server hostname
+ *   SMTP_PORT      – SMTP port (587 for TLS, 465 for SSL, 25 for plain)
+ *   SMTP_USERNAME  – SMTP account username / address
+ *   SMTP_PASSWORD  – SMTP account password  (set via env var, never hardcode)
+ *   SMTP_FROM_EMAIL – Sender address shown in the From: header
+ *   SMTP_FROM_NAME  – Sender display name
+ *
+ * If SMTP_PASSWORD is empty, email delivery will silently fail on servers that
+ * require authentication.  Set the environment variable before deployment.
+ */
+define('SMTP_HOST',       getenv('SMTP_HOST')       ?: 'localhost');
+define('SMTP_PORT',       (int)(getenv('SMTP_PORT') ?: 25));
+define('SMTP_USERNAME',   getenv('SMTP_USERNAME')   ?: '');
+define('SMTP_PASSWORD',   getenv('SMTP_PASSWORD')   ?: '');
+define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'noreply@buzznation.com');
+define('SMTP_FROM_NAME',  getenv('SMTP_FROM_NAME')  ?: 'Buzznation Portal');
 
 function sendEmail(string $to, string $subject, string $body, string $toName = ''): bool {
     $fromEmail = SMTP_FROM_EMAIL;

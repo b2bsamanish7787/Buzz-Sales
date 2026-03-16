@@ -74,16 +74,23 @@ class Notifier {
     }
 
     private function createRoleNotification(string $role, int $projectId, string $message): void {
-        $this->db->execute(
-            "INSERT INTO notifications (target_role, project_id, message) VALUES (?, ?, ?)",
-            [$role, $projectId, $message]
-        );
-
+        // Insert one user-specific notification row per active user in the role.
+        // The target_role column is kept so that queries can filter by role even
+        // without resolving individual user IDs (e.g. for shared-login teams).
         $users = $this->db->fetchAll("SELECT id FROM users WHERE role = ? AND status = 'active'", [$role]);
-        foreach ($users as $u) {
+        if ($users) {
+            foreach ($users as $u) {
+                $this->db->execute(
+                    "INSERT INTO notifications (user_id, target_role, project_id, message) VALUES (?, ?, ?, ?)",
+                    [$u['id'], $role, $projectId, $message]
+                );
+            }
+        } else {
+            // No active users for this role yet – store a role-only record so the
+            // notification is visible as soon as a user with that role logs in.
             $this->db->execute(
-                "INSERT INTO notifications (user_id, target_role, project_id, message) VALUES (?, ?, ?, ?)",
-                [$u['id'], $role, $projectId, $message]
+                "INSERT INTO notifications (target_role, project_id, message) VALUES (?, ?, ?)",
+                [$role, $projectId, $message]
             );
         }
     }
