@@ -131,19 +131,19 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 -- Default admin user (password: Admin@123)
 INSERT IGNORE INTO users (username, email, password_hash, role, full_name, status)
-VALUES ('admin', 'admin@buzznation.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'System Administrator', 'active');
+VALUES ('admin', 'admin@buzznation.com', '$2y$10$F20JH45nfwt27/6hBcxFb.9UIKbQRDVccBaI8AKNXp9Kb/15udBHC', 'admin', 'System Administrator', 'active');
 
 -- Sample sales user (password: Sales@123)
 INSERT IGNORE INTO users (username, email, password_hash, role, full_name, status)
-VALUES ('sales1', 'sales1@buzznation.com', '$2y$10$TKh8H1.PfunDiE19Cs9x8eR9hh0JT2JHV/q5VXU7fZVLEkPmYhUy.', 'sales', 'Sales User One', 'active');
+VALUES ('sales1', 'sales1@buzznation.com', '$2y$10$EAuEVZdijk.lgF08TxRc8.jFd8ylD2TbIACIujYzebjF.osLXP6yq', 'sales', 'Sales User One', 'active');
 
 -- Sample design user (password: Design@123)
 INSERT IGNORE INTO users (username, email, password_hash, role, full_name, status)
-VALUES ('design1', 'design1@buzznation.com', '$2y$10$6bYcSR0EHI5JTGcFjJUiZuQzBMXJZ8qLfDqVQ6Hm0NQvVu.vCxP6', 'design', 'Design User One', 'active');
+VALUES ('design1', 'design1@buzznation.com', '$2y$10$jEl6uxg0XREkUlDUHG0aauVItNR6sEmryWVg3Iwa0v8PaooiTw22C', 'design', 'Design User One', 'active');
 
 -- Sample operations user (password: Ops@1234)
 INSERT IGNORE INTO users (username, email, password_hash, role, full_name, status)
-VALUES ('ops1', 'ops1@buzznation.com', '$2y$10$rIJ19ADjiu6S4rNQA0n3ROhGkVNxSjcM5LUgRF2U5tFp1nq7V8zBq', 'operations', 'Operations User One', 'active');
+VALUES ('ops1', 'ops1@buzznation.com', '$2y$10$YzII3xukSlXfw2nd/Vudxe7YZ/7sNoMdIk1qX0DEl6UDlpT6gzdQa', 'operations', 'Operations User One', 'active');
 
 -- Default notification emails
 INSERT IGNORE INTO notification_emails (role, email, active) VALUES
@@ -151,3 +151,21 @@ INSERT IGNORE INTO notification_emails (role, email, active) VALUES
 ('operations', 'ops@buzznation.com', 1),
 ('sales', 'sales@buzznation.com', 1),
 ('admin', 'admin@buzznation.com', 1);
+
+-- -----------------------------------------------------------------------
+-- Fix password hashes for pre-existing installations.
+-- If the rows already exist (INSERT IGNORE skipped them) but have the
+-- wrong hash, the UPDATE below corrects them without touching any data
+-- that was changed after initial setup.
+-- -----------------------------------------------------------------------
+UPDATE users SET password_hash = '$2y$10$F20JH45nfwt27/6hBcxFb.9UIKbQRDVccBaI8AKNXp9Kb/15udBHC'
+    WHERE username = 'admin'  AND password_hash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+
+UPDATE users SET password_hash = '$2y$10$EAuEVZdijk.lgF08TxRc8.jFd8ylD2TbIACIujYzebjF.osLXP6yq'
+    WHERE username = 'sales1' AND password_hash = '$2y$10$TKh8H1.PfunDiE19Cs9x8eR9hh0JT2JHV/q5VXU7fZVLEkPmYhUy.';
+
+UPDATE users SET password_hash = '$2y$10$jEl6uxg0XREkUlDUHG0aauVItNR6sEmryWVg3Iwa0v8PaooiTw22C'
+    WHERE username = 'design1' AND password_hash = '$2y$10$6bYcSR0EHI5JTGcFjJUiZuQzBMXJZ8qLfDqVQ6Hm0NQvVu.vCxP6';
+
+UPDATE users SET password_hash = '$2y$10$YzII3xukSlXfw2nd/Vudxe7YZ/7sNoMdIk1qX0DEl6UDlpT6gzdQa'
+    WHERE username = 'ops1'    AND password_hash = '$2y$10$rIJ19ADjiu6S4rNQA0n3ROhGkVNxSjcM5LUgRF2U5tFp1nq7V8zBq';

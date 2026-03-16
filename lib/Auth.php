@@ -27,8 +27,8 @@ class Auth {
         }
 
         $user = $this->db->fetchOne(
-            "SELECT * FROM users WHERE username = ? AND status = 'active'",
-            [trim($username)]
+            "SELECT * FROM users WHERE (username = ? OR email = ?) AND status = 'active'",
+            [trim($username), trim($username)]
         );
 
         if (!$user || !password_verify($password, $user['password_hash'])) {

@@ -61,12 +61,12 @@ body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%
           <form id="loginForm" novalidate>
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="mb-3">
-              <label class="form-label fw-semibold">Username</label>
+              <label class="form-label fw-semibold">Username or Email</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="fa fa-user text-muted"></i></span>
-                <input type="text" class="form-control" name="username" id="username" placeholder="Enter username" required autocomplete="username">
+                <input type="text" class="form-control" name="username" id="username" placeholder="Enter username or email" required autocomplete="username">
               </div>
-              <div class="invalid-feedback">Please enter your username.</div>
+              <div class="invalid-feedback">Please enter your username or email.</div>
             </div>
             <div class="mb-4">
               <label class="form-label fw-semibold">Password</label>
