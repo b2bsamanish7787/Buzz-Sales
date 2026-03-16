@@ -2,20 +2,21 @@
 /**
  * Database configuration.
  * Credentials are loaded from environment variables first, falling back to
- * the values below.  Set the following environment variables in production:
+ * the values below.  Override the following environment variables to change
+ * the connection without editing this file:
  *
- *   DB_HOST   – MySQL hostname (default: localhost)
- *   DB_NAME   – Database name  (default: buzz_sales_db)
- *   DB_USER   – MySQL username (default: buzz_user  – change before deployment)
- *   DB_PASS   – MySQL password (REQUIRED in production – no default provided)
+ *   DB_HOST   – MySQL hostname
+ *   DB_NAME   – Database name
+ *   DB_USER   – MySQL username
+ *   DB_PASS   – MySQL password
  *
- * IMPORTANT: Never run in production with an empty DB_PASS.
- * Create a dedicated MySQL user with least-privilege access instead of root.
+ * IMPORTANT: Never commit real credentials to version control.
+ * Use environment variables in production wherever possible.
  */
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'buzz_sales_db');
-define('DB_USER', getenv('DB_USER') ?: 'buzz_user');
-define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_HOST', getenv('DB_HOST') ?: 'az1-ts111.a2hosting.com');
+define('DB_NAME', getenv('DB_NAME') ?: 'desig102_buzz_sales_db');
+define('DB_USER', getenv('DB_USER') ?: 'desig102_buzz_sales_usr');
+define('DB_PASS', getenv('DB_PASS') ?: '&zbmEYmauOo9Rj(I');
 define('DB_CHARSET', 'utf8mb4');
 
 function getPDO(): PDO {

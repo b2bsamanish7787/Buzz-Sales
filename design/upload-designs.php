@@ -76,7 +76,7 @@ $ongoingProjects   = $db->fetchAll("SELECT * FROM projects WHERE status='ongoing
                 <p class="mb-1 fw-semibold">Drag &amp; Drop design files here</p>
                 <p class="text-muted small mb-3">Supported: Images, PDF, AI, PSD, ZIP – Max 500MB each</p>
                 <input type="file" id="fileInput" multiple accept="image/*,.pdf,.ai,.psd,.eps,.zip,.rar,.indd,.svg" style="display:none;">
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="$('#fileInput').click()">Browse Files</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="browseBtn">Browse Files</button>
               </div>
               <div class="file-list" id="fileList"></div>
               <div id="uploadProgress" style="display:none;" class="mt-2">

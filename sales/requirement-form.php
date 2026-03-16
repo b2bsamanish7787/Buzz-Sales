@@ -207,7 +207,7 @@ $csrfToken = $auth->generateCSRFToken();
           <p class="mb-1 fw-semibold">Drag &amp; Drop files here</p>
           <p class="text-muted small mb-3">or click to browse</p>
           <input type="file" id="fileInput" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.ai,.psd" style="display:none;">
-          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="$('#fileInput').click()">Browse Files</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="browseBtn">Browse Files</button>
         </div>
         <div class="file-list" id="fileList"></div>
         <div id="uploadProgress" style="display:none;">

@@ -72,7 +72,7 @@ const BuzzApp = (function ($) {
 
         if (!$zone.length) return { getFiles: function() { return []; } };
 
-        $zone.on('click', function () { $input.trigger('click'); });
+        $zone.on('click', function () { $input[0].click(); });
 
         $zone.on('dragover dragenter', function (e) {
             e.preventDefault();

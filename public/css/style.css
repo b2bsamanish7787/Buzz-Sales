@@ -79,6 +79,8 @@ body {
   margin-left: var(--sidebar-w);
   padding: 2rem;
   min-height: calc(100vh - 56px);
+  flex: 1;      /* grow to fill remaining flex space beside the fixed sidebar */
+  min-width: 0; /* prevent flex children from overflowing */
 }
 
 /* ---- Stat Cards ---- */
