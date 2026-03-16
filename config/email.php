@@ -45,7 +45,9 @@ function sendEmail(string $to, string $subject, string $body, string $toName = '
 
     $result = mail($to, $subject, $htmlBody, $headers);
     if (!$result) {
-        error_log("sendEmail failed to send to {$to} with subject: {$subject}");
+        // Sanitize the address before writing it to the log (prevent log injection)
+        $safeRecipient = preg_replace('/[^\w@.\-]/', '', $to);
+        error_log("sendEmail failed to send to {$safeRecipient} with subject: {$subject}");
     }
     return $result;
 }

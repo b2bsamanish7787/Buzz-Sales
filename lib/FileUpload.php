@@ -20,7 +20,7 @@ class FileUpload {
         $dir      = UPLOAD_PATH . $projectId . '/';
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0750, true);
+            mkdir($dir, 0755, true);
         }
 
         $filePath = $dir . $fileName;

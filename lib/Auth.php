@@ -13,13 +13,26 @@ class Auth {
     }
 
     public function login(string $username, string $password): array {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+
+        // Brute-force protection: block an IP after 10 failed attempts in 15 minutes
+        $windowStart = date('Y-m-d H:i:s', time() - 900);
+        $failRow = $this->db->fetchOne(
+            "SELECT COUNT(*) AS cnt FROM activity_logs
+             WHERE ip_address = ? AND action LIKE 'Failed login%' AND created_at >= ?",
+            [$ip, $windowStart]
+        );
+        if (($failRow['cnt'] ?? 0) >= 10) {
+            return ['success' => false, 'message' => 'Too many failed attempts. Please try again in 15 minutes.'];
+        }
+
         $user = $this->db->fetchOne(
             "SELECT * FROM users WHERE username = ? AND status = 'active'",
             [trim($username)]
         );
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
-            $this->logActivity(null, 'Failed login attempt for username: ' . htmlspecialchars($username), null, $_SERVER['REMOTE_ADDR'] ?? '');
+            $this->logActivity(null, 'Failed login attempt for username: ' . htmlspecialchars($username), null, $ip);
             return ['success' => false, 'message' => 'Invalid username or password.'];
         }
 
@@ -33,7 +46,7 @@ class Auth {
 
         session_regenerate_id(true);
 
-        $this->logActivity($user['id'], 'User logged in', null, $_SERVER['REMOTE_ADDR'] ?? '');
+        $this->logActivity($user['id'], 'User logged in', null, $ip);
 
         return ['success' => true, 'role' => $user['role'], 'full_name' => $user['full_name']];
     }

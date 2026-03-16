@@ -1,6 +1,22 @@
 <?php
 define('APP_NAME', 'Buzznation Client Requirement Portal');
-define('APP_URL', 'http://localhost/buzz-sales-portal');
+
+// APP_URL is auto-detected from the current request so the same codebase works
+// on any hostname (dev, staging, production).  Override via the APP_URL
+// environment variable if you need to force a specific value.
+if (!defined('APP_URL')) {
+    $_appUrl = getenv('APP_URL');
+    if (!$_appUrl) {
+        $_scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        // Sanitize HTTP_HOST: only allow hostname characters (no port injection etc.)
+        $_rawHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $_host    = preg_replace('/[^a-zA-Z0-9.\-:]/', '', $_rawHost);
+        if (!$_host) { $_host = 'localhost'; }
+        $_appUrl  = $_scheme . '://' . $_host;
+    }
+    define('APP_URL', rtrim($_appUrl, '/'));
+    unset($_appUrl, $_scheme, $_rawHost, $_host);
+}
 define('UPLOAD_PATH', dirname(__DIR__) . '/uploads/');
 define('LOG_PATH', dirname(__DIR__) . '/logs/');
 define('MAX_FILE_SIZE', 500 * 1024 * 1024);
