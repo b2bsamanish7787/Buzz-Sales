@@ -656,38 +656,12 @@ $('#requirementForm').on('submit', function (e) {
     var srLines = Object.keys(sr).map(function (k) { return k + ': ' + sr[k]; });
     $('#hidSpecialReq').val(srLines.join('\n'));
 
-    /* 4. Submit */
+    /* 4. Disable submit and build data object */
     var btn = $('#submitBtn');
     btn.prop('disabled', true);
     $('#submitSpinner').removeClass('d-none');
 
-    var files    = uploader.getFiles();
     var formData = $(form).serializeArray();
-
-    if (!files.length) {
-        submitForm(formData, []);
-        return;
-    }
-
-    var uploadedIds = [];
-    var total = files.length;
-    var done  = 0;
-    $('#uploadProgress').show();
-
-    BuzzApp.uploadFiles(files, 0, 'requirement',
-        function (pct, name) {
-            $('#progressFill').css('width', Math.round((done / total) * 100 + pct / total) + '%');
-            $('#progressText').text('Uploading: ' + name + ' (' + pct + '%)');
-        },
-        function (uploaded) {
-            uploaded.forEach(function (f) { uploadedIds.push(f.file_id); });
-            $('#uploadProgress').hide();
-            submitForm(formData, uploadedIds);
-        }
-    );
-});
-
-function submitForm(formData, fileIds) {
     var data = {};
     formData.forEach(function (f) {
         if (f.name === 'requirement_type[]') {
@@ -697,35 +671,56 @@ function submitForm(formData, fileIds) {
             data[f.name] = f.value;
         }
     });
-    if (fileIds.length) { data.file_ids = fileIds.join(','); }
 
+    /* 5. Submit form data first to create the project, then upload files */
     BuzzApp.ajax('../api/form-submit.php', data, function (res) {
-        $('#submitBtn').prop('disabled', false);
-        $('#submitSpinner').addClass('d-none');
-        if (res.success) {
-            if (fileIds.length && res.project_id) {
-                $.post('../api/file-upload.php', {
-                    action: 'link', project_id: res.project_id,
-                    file_ids: fileIds.join(','), csrf_token: BuzzApp.getCsrfToken()
-                });
-            }
-            $('#formAlert').html(
-                '<div class="alert alert-success alert-dismissible">' +
-                '<i class="fa fa-check-circle me-2"></i>' + res.message +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>'
-            );
-            $('html').animate({scrollTop: 0}, 400);
-            $('#requirementForm')[0].reset();
-            uploader.reset();
-            setTimeout(function () { window.location.href = 'my-projects.php'; }, 2000);
-        } else {
+        if (!res.success) {
+            btn.prop('disabled', false);
+            $('#submitSpinner').addClass('d-none');
             $('#formAlert').html(
                 '<div class="alert alert-danger"><i class="fa fa-times-circle me-2"></i>' +
                 (res.message || 'Submission failed.') + '</div>'
             );
             $('html').animate({scrollTop: 0}, 400);
+            return;
+        }
+
+        /* 6. Upload files with the actual project_id */
+        var files     = uploader.getFiles();
+        var projectId = res.project_id;
+
+        if (files.length && projectId) {
+            var total = files.length;
+            var done  = 0;
+            $('#uploadProgress').show();
+            BuzzApp.uploadFiles(files, projectId, 'requirement',
+                function (pct, name) {
+                    $('#progressFill').css('width', Math.round((done / total) * 100 + pct / total) + '%');
+                    $('#progressText').text('Uploading: ' + name + ' (' + pct + '%)');
+                },
+                function () {
+                    $('#uploadProgress').hide();
+                    finishSuccess(res.message);
+                }
+            );
+        } else {
+            finishSuccess(res.message);
         }
     });
+});
+
+function finishSuccess(message) {
+    $('#submitBtn').prop('disabled', false);
+    $('#submitSpinner').addClass('d-none');
+    $('#formAlert').html(
+        '<div class="alert alert-success alert-dismissible">' +
+        '<i class="fa fa-check-circle me-2"></i>' + message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>'
+    );
+    $('html').animate({scrollTop: 0}, 400);
+    $('#requirementForm')[0].reset();
+    uploader.reset();
+    setTimeout(function () { window.location.href = 'my-projects.php'; }, 2000);
 }
 </script>
 </body>
