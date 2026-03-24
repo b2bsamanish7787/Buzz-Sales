@@ -415,8 +415,8 @@ $csrfToken = $auth->generateCSRFToken();
               <tr>
                 <td>
                   <div class="bcheck-group">
-                    <label class="bcheck-item"><input type="checkbox" name="floor_type[]" value="Carpet"> Carpet</label>
-                    <label class="bcheck-item"><input type="checkbox" name="floor_type[]" value="Laminate"> Laminate</label>
+                    <label class="bcheck-item"><input type="radio" name="floor_type" value="Carpet"> Carpet</label>
+                    <label class="bcheck-item"><input type="radio" name="floor_type" value="Laminate"> Laminate</label>
                   </div>
                 </td>
                 <td>
@@ -448,18 +448,18 @@ $csrfToken = $auth->generateCSRFToken();
               <tr>
                 <td>
                   <div class="bcheck-group">
-                    <label class="bcheck-item"><input type="checkbox" name="demo_station[]" value="1"> 1</label>
-                    <label class="bcheck-item"><input type="checkbox" name="demo_station[]" value="2"> 2</label>
-                    <label class="bcheck-item"><input type="checkbox" name="demo_station[]" value="3"> 3</label>
-                    <label class="bcheck-item"><input type="checkbox" name="demo_station[]" value="4"> 4</label>
+                    <label class="bcheck-item"><input type="radio" name="demo_station" value="1"> 1</label>
+                    <label class="bcheck-item"><input type="radio" name="demo_station" value="2"> 2</label>
+                    <label class="bcheck-item"><input type="radio" name="demo_station" value="3"> 3</label>
+                    <label class="bcheck-item"><input type="radio" name="demo_station" value="4"> 4</label>
                   </div>
                 </td>
                 <td>
                   <div class="bcheck-group">
-                    <label class="bcheck-item"><input type="checkbox" name="nos_open_disc[]" value="1"> 1</label>
-                    <label class="bcheck-item"><input type="checkbox" name="nos_open_disc[]" value="2"> 2</label>
-                    <label class="bcheck-item"><input type="checkbox" name="nos_open_disc[]" value="3"> 3</label>
-                    <label class="bcheck-item"><input type="checkbox" name="nos_open_disc[]" value="4"> 4</label>
+                    <label class="bcheck-item"><input type="radio" name="nos_open_disc" value="1"> 1</label>
+                    <label class="bcheck-item"><input type="radio" name="nos_open_disc" value="2"> 2</label>
+                    <label class="bcheck-item"><input type="radio" name="nos_open_disc" value="3"> 3</label>
+                    <label class="bcheck-item"><input type="radio" name="nos_open_disc" value="4"> 4</label>
                   </div>
                 </td>
                 <td>
@@ -491,10 +491,10 @@ $csrfToken = $auth->generateCSRFToken();
                 </td>
                 <td>
                   <div class="bcheck-group">
-                    <label class="bcheck-item"><input type="checkbox" name="total_mr[]" value="1"> 1</label>
-                    <label class="bcheck-item"><input type="checkbox" name="total_mr[]" value="2"> 2</label>
-                    <label class="bcheck-item"><input type="checkbox" name="total_mr[]" value="3"> 3</label>
-                    <label class="bcheck-item"><input type="checkbox" name="total_mr[]" value="4"> 4</label>
+                    <label class="bcheck-item"><input type="radio" name="total_mr" value="1"> 1</label>
+                    <label class="bcheck-item"><input type="radio" name="total_mr" value="2"> 2</label>
+                    <label class="bcheck-item"><input type="radio" name="total_mr" value="3"> 3</label>
+                    <label class="bcheck-item"><input type="radio" name="total_mr" value="4"> 4</label>
                   </div>
                 </td>
                 <td>
@@ -635,22 +635,22 @@ $('#requirementForm').on('submit', function (e) {
 
     /* Special requirements – all additional-design checkboxes as readable text */
     var sr = {};
-    var floorType = $('input[name="floor_type[]"]:checked').map(function () { return this.value; }).get();
-    if (floorType.length)   { sr['Floor Type']                  = floorType.join(', '); }
+    var floorType = $('input[name="floor_type"]:checked').val();
+    if (floorType)          { sr['Floor Type']                  = floorType; }
     var oda = $('input[name="open_disc_area"]:checked').val();
     if (oda)                { sr['Open Discussion Area']         = oda; }
     var da = $('input[name="digital_assets"]:checked').val();
     if (da)                 { sr['Digital Assets (LED+TVs)']     = da; }
-    var ds = $('input[name="demo_station[]"]:checked').map(function () { return this.value; }).get();
-    if (ds.length)          { sr['Demo Station']                 = ds.join(', '); }
-    var noda = $('input[name="nos_open_disc[]"]:checked').map(function () { return this.value; }).get();
-    if (noda.length)        { sr['Nos. Open Discussion Area']    = noda.join(', '); }
+    var ds = $('input[name="demo_station"]:checked').val();
+    if (ds)                 { sr['Demo Station']                 = ds; }
+    var noda = $('input[name="nos_open_disc"]:checked').val();
+    if (noda)               { sr['Nos. Open Discussion Area']    = noda; }
     var tk = $('input[name="touch_kiosk"]:checked').val();
     if (tk)                 { sr['Touch Screen Kiosk']           = tk; }
     var mr = $('input[name="meeting_room"]:checked').val();
     if (mr)                 { sr['Meeting Room']                 = mr; }
-    var tmr = $('input[name="total_mr[]"]:checked').map(function () { return this.value; }).get();
-    if (tmr.length)         { sr['Total Nos. of MR']             = tmr.join(', '); }
+    var tmr = $('input[name="total_mr"]:checked').val();
+    if (tmr)                { sr['Total Nos. of MR']             = tmr; }
     var be = $('input[name="booth_engagement"]:checked').val();
     if (be)                 { sr['Booth Engagement']             = be; }
     var srLines = Object.keys(sr).map(function (k) { return k + ': ' + sr[k]; });
