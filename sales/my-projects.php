@@ -454,9 +454,9 @@ function parseSR(string $raw): array {
                 <i class="fa fa-exchange-alt me-1"></i>Submit Change Request
               </a>
               <?php endif; ?>
-              <?php if (!in_array($project['status'], ['closed'])): ?>
-              <button class="btn btn-outline-danger btn-sm" onclick="closeProject(<?= $project['id'] ?>)">
-                <i class="fa fa-times-circle me-1"></i>Close Project
+              <?php if (!in_array($project['status'], ['completed','closed'])): ?>
+              <button class="btn btn-outline-danger btn-sm" onclick="openCompleteModal(<?= $project['id'] ?>)">
+                <i class="fa fa-check-circle me-1"></i>Complete &amp; Close
               </button>
               <?php endif; ?>
             </div>
@@ -531,7 +531,7 @@ function parseSR(string $raw): array {
     <div class="form-section mb-4 py-2">
       <div class="d-flex gap-2 flex-wrap align-items-center">
         <label class="fw-semibold me-2 mb-0">Filter:</label>
-        <?php $statuses = ['','pending','approved','rejected','on_hold','ongoing','design_complete','ops_review','sales_review','completed','closed']; ?>
+        <?php $statuses = ['','pending','approved','rejected','on_hold','ongoing','design_complete','ops_review','sales_review','completed']; ?>
         <?php foreach ($statuses as $s): ?>
         <a href="?status=<?= $s ?>" class="btn btn-sm <?= $statusFilter === $s ? 'btn-buzz' : 'btn-outline-secondary' ?>">
           <?= $s ? ucwords(str_replace('_',' ',$s)) : 'All' ?>
@@ -581,14 +581,57 @@ function parseSR(string $raw): array {
 var BASE_URL = '..';
 BuzzApp.initNotifications(<?= $user['id'] ?>);
 
-function closeProject(id) {
-    BuzzApp.confirm('Close this project? This action cannot be undone.', function() {
-        BuzzApp.ajax('../api/form-submit.php', {action:'close_project', project_id:id, csrf_token:BuzzApp.getCsrfToken()}, function(res) {
-            BuzzApp.showToast(res.message, res.success ? 'success' : 'danger');
-            if (res.success) setTimeout(() => location.reload(), 1200);
-        });
-    });
+function openCompleteModal(id) {
+    document.getElementById('completeProjectId').value = id;
+    document.getElementById('completeComments').value = '';
+    new bootstrap.Modal(document.getElementById('completeModal')).show();
 }
+
+document.getElementById('confirmCompleteBtn').addEventListener('click', function() {
+    var id       = document.getElementById('completeProjectId').value;
+    var comments = document.getElementById('completeComments').value;
+    var btn      = this;
+    btn.disabled = true;
+    BuzzApp.ajax('../api/form-submit.php', {
+        action: 'close_project',
+        project_id: id,
+        closing_comments: comments,
+        csrf_token: BuzzApp.getCsrfToken()
+    }, function(res) {
+        btn.disabled = false;
+        bootstrap.Modal.getInstance(document.getElementById('completeModal')).hide();
+        BuzzApp.showToast(res.message, res.success ? 'success' : 'danger');
+        if (res.success) setTimeout(() => location.reload(), 1200);
+    });
+});
 </script>
+<!-- Complete & Close Modal -->
+<div class="modal fade" id="completeModal" tabindex="-1" aria-labelledby="completeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="completeModalLabel"><i class="fa fa-check-circle text-buzz me-2"></i>Complete &amp; Close Project</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="completeProjectId">
+        <div class="mb-3">
+          <label for="completeComments" class="form-label fw-semibold">Closing Comments</label>
+          <textarea class="form-control" id="completeComments" rows="4" placeholder="Add any closing notes or comments about this project…"></textarea>
+        </div>
+        <div class="alert alert-warning py-2 small mb-0">
+          <i class="fa fa-exclamation-triangle me-1"></i>This action will mark the project as <strong>Completed</strong>. It cannot be undone.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-buzz" id="confirmCompleteBtn">
+          <i class="fa fa-check-circle me-1"></i>Complete &amp; Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -180,7 +180,8 @@ if ($action === 'change_request') {
 
 // ---- CLOSE PROJECT ----
 if ($action === 'close_project') {
-    $projectId = (int)($_POST['project_id'] ?? 0);
+    $projectId       = (int)($_POST['project_id'] ?? 0);
+    $closingComments = Security::sanitizeInput($_POST['closing_comments'] ?? '');
 
     if ($user['role'] === ROLE_SALES) {
         $project = $db->fetchOne("SELECT * FROM projects WHERE id = ? AND sales_user_id = ?", [$projectId, $user['id']]);
@@ -193,11 +194,14 @@ if ($action === 'close_project') {
         exit;
     }
 
-    $db->execute("UPDATE projects SET status = 'closed', updated_at = NOW() WHERE id = ?", [$projectId]);
+    $db->execute(
+        "UPDATE projects SET status = 'completed', closing_comments = ?, updated_at = NOW() WHERE id = ?",
+        [$closingComments, $projectId]
+    );
     $logger = new Logger();
-    $logger->log($user['id'], "Project closed: ID:{$projectId}", $projectId, $_SERVER['REMOTE_ADDR'] ?? '');
+    $logger->log($user['id'], "Project completed & closed: ID:{$projectId}", $projectId, $_SERVER['REMOTE_ADDR'] ?? '');
 
-    echo json_encode(['success' => true, 'message' => 'Project closed.']);
+    echo json_encode(['success' => true, 'message' => 'Project marked as completed.']);
     exit;
 }
 

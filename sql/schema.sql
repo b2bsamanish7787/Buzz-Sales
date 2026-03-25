@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS projects (
   client_name VARCHAR(200) NOT NULL,
   status ENUM('pending','approved','rejected','on_hold','ongoing','design_complete','ops_review','sales_review','change_requested','completed','closed') DEFAULT 'pending',
   current_stage VARCHAR(50) DEFAULT 'sales',
+  closing_comments TEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (sales_user_id) REFERENCES users(id)
