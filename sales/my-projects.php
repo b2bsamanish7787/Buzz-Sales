@@ -489,6 +489,33 @@ function parseSR(string $raw): array {
             <?php endforeach; ?>
           </div>
           <?php endif; ?>
+
+          <!-- Design Review History -->
+          <?php if ($reviews): ?>
+          <div class="form-section mt-3">
+            <div class="form-section-title"><i class="fa fa-history text-buzz"></i> Design Review History</div>
+            <?php foreach ($reviews as $r): ?>
+            <div class="mb-2 p-2 bg-light rounded">
+              <div class="d-flex justify-content-between align-items-center">
+                <?= getStatusBadge($r['action']) ?>
+                <small class="text-muted"><?= date('d M Y', strtotime($r['reviewed_at'])) ?></small>
+              </div>
+              <?php if (!empty($r['deadline_days'])): ?>
+              <div class="small mt-1"><strong>Timeline:</strong> <?= (int)$r['deadline_days'] ?> day<?= $r['deadline_days'] != 1 ? 's' : '' ?></div>
+              <?php endif; ?>
+              <?php if (!empty($r['remarks'])): ?>
+              <div class="small mt-1"><strong>Comments:</strong> <?= nl2br(htmlspecialchars($r['remarks'])) ?></div>
+              <?php endif; ?>
+              <?php if (!empty($r['rejection_reason'])): ?>
+              <div class="small mt-1"><strong>Reason:</strong> <?= nl2br(htmlspecialchars($r['rejection_reason'])) ?></div>
+              <?php endif; ?>
+              <?php if (!empty($r['hold_reason'])): ?>
+              <div class="small mt-1"><strong>Hold Reason:</strong> <?= nl2br(htmlspecialchars($r['hold_reason'])) ?></div>
+              <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
         </div>
       </div><!-- /.row -->
 
