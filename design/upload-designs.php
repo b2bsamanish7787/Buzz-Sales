@@ -38,7 +38,7 @@ $ongoingProjects   = $db->fetchAll("SELECT * FROM projects WHERE status='ongoing
   <div class="sidebar">
     <div class="sidebar-section">Design</div>
     <a href="dashboard.php" class="nav-link"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
-    <a href="upload-designs.php" class="nav-link active"><i class="fa fa-cloud-upload-alt"></i> Upload Designs</a>
+    <a href="reports.php" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a>
   </div>
   <div class="main-content">
     <div class="page-header">
@@ -57,6 +57,14 @@ $ongoingProjects   = $db->fetchAll("SELECT * FROM projects WHERE status='ongoing
               <label class="form-label">Select Project <span class="text-danger">*</span></label>
               <?php if (empty($ongoingProjects)): ?>
               <div class="alert alert-warning"><i class="fa fa-info-circle me-2"></i>No ongoing projects to upload designs for.</div>
+              <?php elseif ($selectedProjectId): ?>
+              <?php $selProject = null; foreach ($ongoingProjects as $p) { if ($p['id'] == $selectedProjectId) { $selProject = $p; break; } } ?>
+              <?php if ($selProject): ?>
+              <input type="hidden" id="projectSelect" value="<?= $selectedProjectId ?>">
+              <div class="form-control bg-light">#<?= $selProject['id'] ?> – <?= htmlspecialchars($selProject['project_name']) ?> (<?= htmlspecialchars($selProject['client_name']) ?>)</div>
+              <?php else: ?>
+              <div class="alert alert-warning"><i class="fa fa-info-circle me-2"></i>Project not found or not currently ongoing.</div>
+              <?php endif; ?>
               <?php else: ?>
               <select class="form-select" id="projectSelect" required>
                 <option value="">-- Select a project --</option>
@@ -93,7 +101,7 @@ $ongoingProjects   = $db->fetchAll("SELECT * FROM projects WHERE status='ongoing
 
             <div class="d-flex gap-3 justify-content-end">
               <a href="dashboard.php" class="btn btn-outline-secondary">Cancel</a>
-              <button type="submit" class="btn btn-buzz px-5" id="uploadBtn" <?= empty($ongoingProjects) ? 'disabled' : '' ?>>
+              <button type="submit" class="btn btn-buzz px-5" id="uploadBtn" <?= (empty($ongoingProjects) || ($selectedProjectId && !$selProject ?? false)) ? 'disabled' : '' ?>>
                 <span class="spinner-border spinner-border-sm d-none me-2" id="uploadSpinner"></span>
                 <i class="fa fa-cloud-upload-alt me-1"></i>Upload Designs
               </button>

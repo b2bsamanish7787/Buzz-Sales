@@ -80,7 +80,7 @@ function filterBySales(array $projects, int $uid): array {
   <div class="sidebar">
     <div class="sidebar-section">Design</div>
     <a href="dashboard.php" class="nav-link active"><i class="fa fa-tachometer-alt"></i> Dashboard</a>
-    <a href="upload-designs.php" class="nav-link"><i class="fa fa-cloud-upload-alt"></i> Upload Designs</a>
+    <a href="reports.php" class="nav-link"><i class="fa fa-chart-bar"></i> Reports</a>
   </div>
   <div class="main-content">
 
