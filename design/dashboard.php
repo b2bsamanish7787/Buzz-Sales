@@ -16,21 +16,40 @@ $notifier  = new Notifier();
 $logoutUrl = '../public/logout.php';
 $csrfToken = $auth->generateCSRFToken();
 
-// Get projects grouped by sales user
-$pending  = $db->fetchAll("SELECT p.*, u.full_name as sales_name FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id WHERE p.status='pending' ORDER BY p.created_at ASC");
-$ongoing  = $db->fetchAll("SELECT p.*, u.full_name as sales_name, dr.deadline_days, dr.reviewed_at FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id LEFT JOIN (SELECT project_id, deadline_days, reviewed_at FROM design_reviews WHERE action='approved' ORDER BY reviewed_at DESC LIMIT 1) dr ON dr.project_id=p.id WHERE p.status='ongoing' ORDER BY p.updated_at ASC");
-$completed = $db->fetchAll("SELECT p.*, u.full_name as sales_name FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id WHERE p.status IN ('design_complete','ops_review','sales_review','completed','closed') ORDER BY p.updated_at DESC LIMIT 20");
+// Fetch all three status buckets (with sales_uid for grouping)
+$pending   = $db->fetchAll("SELECT p.*, u.full_name as sales_name, u.id as sales_uid FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id WHERE p.status='pending' ORDER BY p.created_at ASC");
+$ongoing   = $db->fetchAll("
+    SELECT p.*, u.full_name as sales_name, u.id as sales_uid, dr.deadline_days, dr.reviewed_at
+    FROM projects p
+    LEFT JOIN users u ON p.sales_user_id = u.id
+    LEFT JOIN (
+        SELECT d1.project_id, d1.deadline_days, d1.reviewed_at
+        FROM design_reviews d1
+        INNER JOIN (
+            SELECT project_id, MAX(reviewed_at) AS max_rev
+            FROM design_reviews WHERE action='approved' GROUP BY project_id
+        ) d2 ON d1.project_id = d2.project_id AND d1.reviewed_at = d2.max_rev
+        WHERE d1.action = 'approved'
+    ) dr ON dr.project_id = p.id
+    WHERE p.status = 'ongoing'
+    ORDER BY p.updated_at ASC
+");
+$completed = $db->fetchAll("SELECT p.*, u.full_name as sales_name, u.id as sales_uid FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id WHERE p.status IN ('design_complete','ops_review','sales_review','completed','closed') ORDER BY p.updated_at DESC LIMIT 50");
 
-function groupBySales(array $projects): array {
-    $grouped = [];
-    foreach ($projects as $p) {
-        $name = $p['sales_name'] ?? 'Unknown';
-        $grouped[$name][] = $p;
+// Build ordered list of sales users who appear in any bucket
+$salesUsers = [];
+foreach (array_merge($pending, $ongoing, $completed) as $p) {
+    $uid = (int)($p['sales_uid'] ?? 0);
+    if ($uid && !isset($salesUsers[$uid])) {
+        $salesUsers[$uid] = $p['sales_name'] ?? 'Unknown';
     }
-    return $grouped;
 }
+asort($salesUsers);
 
-$pendingGrouped = groupBySales($pending);
+// Filter helpers
+function filterBySales(array $projects, int $uid): array {
+    return array_values(array_filter($projects, fn($p) => (int)($p['sales_uid'] ?? 0) === $uid));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,6 +61,18 @@ $pendingGrouped = groupBySales($pending);
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <link rel="stylesheet" href="../public/css/style.css">
 <meta name="csrf-token" content="<?= $csrfToken ?>">
+<style>
+/* ── Sales-user outer tabs ── */
+.sales-tabs .nav-link          { font-weight:600; color:#555; border-radius:8px 8px 0 0; padding:.55rem 1.1rem; }
+.sales-tabs .nav-link.active   { background:var(--buzz-red); color:#fff; border-color:var(--buzz-red); }
+.sales-tabs .nav-link:hover:not(.active) { background:#f8d7d5; color:var(--buzz-red); }
+
+/* ── Status inner tabs ── */
+.status-tabs .nav-link         { font-size:.87rem; color:#555; padding:.38rem .9rem; border-radius:20px; border:1px solid transparent; }
+.status-tabs .nav-link.active  { background:#fff; border-color:#dee2e6; font-weight:700; color:#222; }
+.status-tabs .nav-link:hover:not(.active) { background:#f0f0f0; }
+.status-tabs .badge            { font-size:.75rem; }
+</style>
 </head>
 <body>
 <?php include __DIR__ . '/../includes/navbar.php'; ?>
@@ -52,6 +83,7 @@ $pendingGrouped = groupBySales($pending);
     <a href="upload-designs.php" class="nav-link"><i class="fa fa-cloud-upload-alt"></i> Upload Designs</a>
   </div>
   <div class="main-content">
+
     <div class="page-header">
       <div>
         <h1><i class="fa fa-paint-brush text-buzz me-2"></i>Design Dashboard</h1>
@@ -60,143 +92,176 @@ $pendingGrouped = groupBySales($pending);
       <div class="d-flex gap-2">
         <span class="badge bg-warning text-dark p-2"><?= count($pending) ?> Pending</span>
         <span class="badge bg-info text-dark p-2"><?= count($ongoing) ?> Ongoing</span>
+        <span class="badge bg-success p-2"><?= count($completed) ?> Completed</span>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-4" id="designTabs">
-      <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPending">
-          <i class="fa fa-inbox me-1"></i>Pending Requests
-          <span class="badge bg-warning text-dark ms-1"><?= count($pending) ?></span>
+    <?php
+    // Build tab definitions: [id_suffix, label, pending[], ongoing[], completed[]]
+    $tabDefs = [];
+
+    // ALL tab
+    $tabDefs[] = [
+        'id'        => 'all',
+        'label'     => 'ALL',
+        'pending'   => $pending,
+        'ongoing'   => $ongoing,
+        'completed' => $completed,
+    ];
+
+    // One tab per sales user
+    foreach ($salesUsers as $uid => $name) {
+        $tabDefs[] = [
+            'id'        => 'u' . $uid,
+            'label'     => $name,
+            'pending'   => filterBySales($pending,   $uid),
+            'ongoing'   => filterBySales($ongoing,   $uid),
+            'completed' => filterBySales($completed, $uid),
+        ];
+    }
+    ?>
+
+    <!-- ══ OUTER TABS: Sales Users ══ -->
+    <ul class="nav nav-tabs sales-tabs mb-0" id="salesUserTabs" role="tablist">
+      <?php foreach ($tabDefs as $i => $tab): ?>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link <?= $i === 0 ? 'active' : '' ?>"
+                id="stab-<?= $tab['id'] ?>-btn"
+                data-bs-toggle="tab"
+                data-bs-target="#stab-<?= $tab['id'] ?>"
+                type="button" role="tab">
+          <?= htmlspecialchars($tab['label']) ?>
+          <span class="badge bg-secondary ms-1">
+            <?= count($tab['pending']) + count($tab['ongoing']) + count($tab['completed']) ?>
+          </span>
         </button>
       </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOngoing">
-          <i class="fa fa-spinner me-1"></i>Ongoing
-          <span class="badge bg-info text-dark ms-1"><?= count($ongoing) ?></span>
-        </button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCompleted">
-          <i class="fa fa-check-circle me-1"></i>Completed
-        </button>
-      </li>
+      <?php endforeach; ?>
     </ul>
 
-    <div class="tab-content">
+    <div class="tab-content border border-top-0 rounded-bottom bg-white p-3 mb-4" id="salesUserTabContent">
+      <?php foreach ($tabDefs as $i => $tab):
+        $tid = $tab['id'];
+      ?>
+      <div class="tab-pane fade <?= $i === 0 ? 'show active' : '' ?>"
+           id="stab-<?= $tid ?>"
+           role="tabpanel">
 
-      <!-- PENDING TAB -->
-      <div class="tab-pane fade show active" id="tabPending">
-        <?php if (empty($pending)): ?>
-        <div class="empty-state"><i class="fa fa-check-circle"></i><p>No pending requests. Great work!</p></div>
-        <?php else: ?>
-
-        <!-- Sales User Tabs -->
-        <?php if (count($pendingGrouped) > 1): ?>
-        <ul class="nav nav-pills mb-3" id="salesTabs">
-          <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#salesAll">All (<?= count($pending) ?>)</button>
-          </li>
-          <?php foreach ($pendingGrouped as $salesName => $projs): ?>
-          <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="pill"
-              data-bs-target="#sales<?= preg_replace('/\W+/', '', $salesName) ?>">
-              <?= htmlspecialchars($salesName) ?> (<?= count($projs) ?>)
+        <!-- ── INNER STATUS TABS ── -->
+        <ul class="nav nav-pills status-tabs mb-3 mt-1" id="status-nav-<?= $tid ?>" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active"
+                    data-bs-toggle="pill"
+                    data-bs-target="#<?= $tid ?>-pending"
+                    type="button">
+              <i class="fa fa-inbox me-1"></i>Pending
+              <span class="badge bg-warning text-dark ms-1"><?= count($tab['pending']) ?></span>
             </button>
           </li>
-          <?php endforeach; ?>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    data-bs-toggle="pill"
+                    data-bs-target="#<?= $tid ?>-ongoing"
+                    type="button">
+              <i class="fa fa-spinner me-1"></i>Ongoing
+              <span class="badge bg-info text-dark ms-1"><?= count($tab['ongoing']) ?></span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    data-bs-toggle="pill"
+                    data-bs-target="#<?= $tid ?>-completed"
+                    type="button">
+              <i class="fa fa-check-circle me-1"></i>Completed
+              <span class="badge bg-success ms-1"><?= count($tab['completed']) ?></span>
+            </button>
+          </li>
         </ul>
 
-        <div class="tab-content">
-          <div class="tab-pane fade show active" id="salesAll">
+        <div class="tab-content" id="status-content-<?= $tid ?>">
+
+          <!-- Pending -->
+          <div class="tab-pane fade show active" id="<?= $tid ?>-pending" role="tabpanel">
+            <?php if (empty($tab['pending'])): ?>
+            <div class="empty-state"><i class="fa fa-check-circle"></i><p>No pending requests.</p></div>
+            <?php else: ?>
             <div class="row g-3">
-              <?php foreach ($pending as $p): renderPendingCard($p); endforeach; ?>
+              <?php foreach ($tab['pending'] as $p): renderPendingCard($p); endforeach; ?>
             </div>
+            <?php endif; ?>
           </div>
-          <?php foreach ($pendingGrouped as $salesName => $projs): ?>
-          <div class="tab-pane fade" id="sales<?= preg_replace('/\W+/', '', $salesName) ?>">
+
+          <!-- Ongoing -->
+          <div class="tab-pane fade" id="<?= $tid ?>-ongoing" role="tabpanel">
+            <?php if (empty($tab['ongoing'])): ?>
+            <div class="empty-state"><i class="fa fa-spinner"></i><p>No ongoing projects.</p></div>
+            <?php else: ?>
             <div class="row g-3">
-              <?php foreach ($projs as $p): renderPendingCard($p); endforeach; ?>
+              <?php foreach ($tab['ongoing'] as $p):
+                $daysLeft = null;
+                if (!empty($p['reviewed_at']) && !empty($p['deadline_days'])) {
+                    $deadlineTs = strtotime($p['reviewed_at']) + ((int)$p['deadline_days'] * 86400);
+                    $daysLeft   = (int)ceil(($deadlineTs - time()) / 86400);
+                }
+              ?>
+              <div class="col-12 col-md-6 col-xl-4">
+                <div class="project-card h-100" style="border-left-color:#0dcaf0;">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h6>
+                    <?php if ($daysLeft !== null): ?>
+                    <span class="deadline-badge <?= $daysLeft <= 2 ? 'urgent' : ($daysLeft <= 5 ? 'warning' : 'ok') ?>">
+                      <?= $daysLeft <= 0 ? 'OVERDUE' : $daysLeft . ' days left' ?>
+                    </span>
+                    <?php endif; ?>
+                  </div>
+                  <div class="project-meta mb-2">
+                    <i class="fa fa-building me-1"></i><?= htmlspecialchars($p['client_name']) ?>
+                    &nbsp;|&nbsp;<small class="text-muted">Sales: <?= htmlspecialchars($p['sales_name'] ?? '—') ?></small>
+                  </div>
+                  <div class="d-flex gap-2 mt-3">
+                    <a href="review.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-info flex-fill"><i class="fa fa-eye me-1"></i>View</a>
+                    <a href="upload-designs.php?project_id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary flex-fill"><i class="fa fa-upload me-1"></i>Upload</a>
+                  </div>
+                </div>
+              </div>
+              <?php endforeach; ?>
             </div>
+            <?php endif; ?>
           </div>
-          <?php endforeach; ?>
-        </div>
-        <?php else: ?>
-        <div class="row g-3">
-          <?php foreach ($pending as $p): renderPendingCard($p); endforeach; ?>
-        </div>
-        <?php endif; ?>
 
-        <?php endif; ?>
-      </div>
-
-      <!-- ONGOING TAB -->
-      <div class="tab-pane fade" id="tabOngoing">
-        <?php if (empty($ongoing)): ?>
-        <div class="empty-state"><i class="fa fa-spinner"></i><p>No ongoing projects.</p></div>
-        <?php else: ?>
-        <div class="row g-3">
-          <?php foreach ($ongoing as $p):
-            $daysLeft = null;
-            if ($p['reviewed_at'] && $p['deadline_days']) {
-                $deadlineDate = strtotime($p['reviewed_at']) + ($p['deadline_days'] * 86400);
-                $daysLeft     = (int)ceil(($deadlineDate - time()) / 86400);
-            }
-          ?>
-          <div class="col-12 col-md-6 col-xl-4">
-            <div class="project-card h-100" style="border-left-color: #0dcaf0;">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h6>
-                <?php if ($daysLeft !== null): ?>
-                <span class="deadline-badge <?= $daysLeft <= 2 ? 'urgent' : ($daysLeft <= 5 ? 'warning' : 'ok') ?>">
-                  <?= $daysLeft <= 0 ? 'OVERDUE' : $daysLeft . ' days left' ?>
-                </span>
-                <?php endif; ?>
-              </div>
-              <div class="project-meta mb-2">
-                <i class="fa fa-building me-1"></i><?= htmlspecialchars($p['client_name']) ?>
-                &nbsp;|&nbsp; <small class="text-muted">Sales: <?= htmlspecialchars($p['sales_name'] ?? '—') ?></small>
-              </div>
-              <div class="d-flex gap-2 mt-3">
-                <a href="review.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-info flex-fill"><i class="fa fa-eye me-1"></i>View</a>
-                <a href="upload-designs.php?project_id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary flex-fill"><i class="fa fa-upload me-1"></i>Upload</a>
+          <!-- Completed -->
+          <div class="tab-pane fade" id="<?= $tid ?>-completed" role="tabpanel">
+            <?php if (empty($tab['completed'])): ?>
+            <div class="empty-state"><i class="fa fa-check-circle"></i><p>No completed projects yet.</p></div>
+            <?php else: ?>
+            <div class="table-card">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead><tr><th>#</th><th>Project</th><th>Client</th><th>Sales</th><th>Status</th><th>Date</th></tr></thead>
+                  <tbody>
+                    <?php foreach ($tab['completed'] as $p): ?>
+                    <tr>
+                      <td><?= $p['id'] ?></td>
+                      <td class="fw-semibold"><?= htmlspecialchars($p['project_name']) ?></td>
+                      <td><?= htmlspecialchars($p['client_name']) ?></td>
+                      <td><?= htmlspecialchars($p['sales_name'] ?? '—') ?></td>
+                      <td><?= getStatusBadge($p['status']) ?></td>
+                      <td class="text-muted small"><?= date('d M Y', strtotime($p['updated_at'])) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
               </div>
             </div>
+            <?php endif; ?>
           </div>
-          <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
-      </div>
 
-      <!-- COMPLETED TAB -->
-      <div class="tab-pane fade" id="tabCompleted">
-        <?php if (empty($completed)): ?>
-        <div class="empty-state"><i class="fa fa-check-circle"></i><p>No completed projects yet.</p></div>
-        <?php else: ?>
-        <div class="table-card">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead><tr><th>#</th><th>Project</th><th>Client</th><th>Sales</th><th>Status</th><th>Date</th></tr></thead>
-              <tbody>
-                <?php foreach ($completed as $p): ?>
-                <tr>
-                  <td><?= $p['id'] ?></td>
-                  <td class="fw-semibold"><?= htmlspecialchars($p['project_name']) ?></td>
-                  <td><?= htmlspecialchars($p['client_name']) ?></td>
-                  <td><?= htmlspecialchars($p['sales_name'] ?? '—') ?></td>
-                  <td><?= getStatusBadge($p['status']) ?></td>
-                  <td class="text-muted small"><?= date('d M Y', strtotime($p['updated_at'])) ?></td>
-                </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>
+        </div><!-- /.status tab-content -->
+      </div><!-- /.outer tab-pane -->
+      <?php endforeach; ?>
+    </div><!-- /.outer tab-content -->
+
+  </div><!-- /.main-content -->
 </div>
 
 <?php
