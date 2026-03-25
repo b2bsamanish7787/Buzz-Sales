@@ -33,6 +33,14 @@ $details = $db->fetchOne("SELECT * FROM project_details WHERE project_id=?", [$p
 $uploader = new FileUpload();
 $refFiles = $uploader->getProjectFiles($projectId, 'requirement');
 $prevReviews = $db->fetchAll("SELECT * FROM design_reviews WHERE project_id=? ORDER BY reviewed_at DESC", [$projectId]);
+$changeRequests = $db->fetchAll("SELECT * FROM change_requests WHERE project_id=? ORDER BY created_at DESC", [$projectId]);
+foreach ($changeRequests as &$cr) {
+    $cr['files'] = $db->fetchAll(
+        "SELECT * FROM file_uploads WHERE change_request_id=? ORDER BY created_at ASC",
+        [$cr['id']]
+    );
+}
+unset($cr);
 
 /* ---- Helpers ---- */
 function parseSRDesign(string $raw): array {
@@ -360,6 +368,35 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
               <?php if ($r['rejection_reason']): ?><div class="small"><strong>Reason:</strong> <?= htmlspecialchars($r['rejection_reason']) ?></div><?php endif; ?>
               <?php if ($r['hold_reason']): ?><div class="small"><strong>Hold Reason:</strong> <?= htmlspecialchars($r['hold_reason']) ?></div><?php endif; ?>
               <?php if ($r['deadline_days']): ?><div class="small"><strong>Deadline:</strong> <?= $r['deadline_days'] ?> days</div><?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
+
+          <!-- Change Requests -->
+          <?php if ($changeRequests): ?>
+          <div class="form-section mt-3">
+            <div class="form-section-title"><i class="fa fa-exchange-alt text-buzz"></i> Client Change Requests</div>
+            <?php foreach ($changeRequests as $cr): ?>
+            <div class="mb-2 p-2 bg-light rounded">
+              <div class="small fw-semibold"><?= date('d M Y', strtotime($cr['created_at'])) ?> – <?= getStatusBadge($cr['status']) ?></div>
+              <div class="small mt-1"><?= nl2br(htmlspecialchars($cr['description'])) ?></div>
+              <?php if (!empty($cr['notes'])): ?>
+              <div class="small text-muted mt-1"><em><?= nl2br(htmlspecialchars($cr['notes'])) ?></em></div>
+              <?php endif; ?>
+              <?php if (!empty($cr['files'])): ?>
+              <div class="mt-2">
+                <?php foreach ($cr['files'] as $f): ?>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="badge bg-secondary text-uppercase" style="font-size:.7rem;"><?= htmlspecialchars(strtoupper(pathinfo($f['original_name'], PATHINFO_EXTENSION))) ?></span>
+                  <span class="small text-truncate" style="max-width:200px;" title="<?= htmlspecialchars($f['original_name']) ?>"><?= htmlspecialchars($f['original_name']) ?></span>
+                  <span class="small text-muted"><?= $uploader->formatFileSize($f['file_size'] ?? 0) ?></span>
+                  <a href="../api/file-upload.php?action=view&id=<?= $f['id'] ?>" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-1" title="View"><i class="fa fa-eye"></i></a>
+                  <a href="../api/file-upload.php?action=download&id=<?= $f['id'] ?>" class="btn btn-sm btn-outline-primary py-0 px-1" title="Download"><i class="fa fa-download"></i></a>
+                </div>
+                <?php endforeach; ?>
+              </div>
+              <?php endif; ?>
             </div>
             <?php endforeach; ?>
           </div>

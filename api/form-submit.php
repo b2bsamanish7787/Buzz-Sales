@@ -157,7 +157,17 @@ if ($action === 'change_request') {
         "INSERT INTO change_requests (project_id, sales_user_id, description, notes) VALUES (?, ?, ?, ?)",
         [$projectId, $user['id'], $description, $notes]
     );
+    $changeRequestId = $db->lastInsertId();
     $db->execute("UPDATE projects SET status = 'change_requested', updated_at = NOW() WHERE id = ?", [$projectId]);
+
+    // Link any uploaded files to this change request
+    $fileIds = array_filter(array_map('intval', explode(',', $_POST['file_ids'] ?? '')));
+    foreach ($fileIds as $fid) {
+        $db->execute(
+            "UPDATE file_uploads SET change_request_id=? WHERE id=? AND project_id=?",
+            [$changeRequestId, $fid, $projectId]
+        );
+    }
 
     $logger   = new Logger();
     $notifier = new Notifier();

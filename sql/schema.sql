@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS file_uploads (
   file_size BIGINT,
   file_type VARCHAR(100),
   upload_type ENUM('requirement','design','change_request') DEFAULT 'requirement',
+  change_request_id INT NULL,
   uploaded_by INT,
   uploaded_by_role VARCHAR(20),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
