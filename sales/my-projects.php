@@ -431,7 +431,7 @@ function parseSR(string $raw): array {
                   <td class="fw-bold">$<?= number_format($c['cost_usd'], 2) ?></td>
                   <td><?= htmlspecialchars($c['remarks'] ?? '—') ?></td>
                   <td><?= htmlspecialchars($c['full_name'] ?? 'Operations') ?></td>
-                  <td class="small text-muted"><?= date('d M Y', strtotime($c['created_at'])) ?></td>
+                  <td class="small text-muted"><?= date('d M Y H:i', strtotime($c['created_at'])) ?></td>
                 </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -446,7 +446,7 @@ function parseSR(string $raw): array {
             <div class="form-section-title"><i class="fa fa-info-circle text-buzz"></i> Project Info</div>
             <div class="mb-2"><strong>Status:</strong> <?= getStatusBadge($project['status']) ?></div>
             <div class="mb-2"><strong>Stage:</strong> <?= ucfirst(htmlspecialchars($project['current_stage'])) ?></div>
-            <div class="mb-2"><strong>Submitted:</strong> <?= date('d M Y', strtotime($project['created_at'])) ?></div>
+            <div class="mb-2"><strong>Submitted:</strong> <?= date('d M Y H:i', strtotime($project['created_at'])) ?></div>
             <div class="mb-3"><strong>Updated:</strong> <?= date('d M Y H:i', strtotime($project['updated_at'])) ?></div>
             <div class="d-grid gap-2">
               <?php if (!in_array($project['status'], ['completed','closed'])): ?>
@@ -468,7 +468,7 @@ function parseSR(string $raw): array {
             <div class="form-section-title"><i class="fa fa-exchange-alt text-buzz"></i> Change Requests</div>
             <?php foreach ($changes as $cr): ?>
             <div class="mb-2 p-2 bg-light rounded">
-              <div class="small fw-semibold"><?= date('d M Y', strtotime($cr['created_at'])) ?> – <?= getStatusBadge($cr['status']) ?></div>
+              <div class="small fw-semibold"><?= date('d M Y H:i', strtotime($cr['created_at'])) ?> – <?= getStatusBadge($cr['status']) ?></div>
               <div class="small mt-1"><?= nl2br(htmlspecialchars($cr['description'])) ?></div>
               <?php if (!empty($cr['notes'])): ?>
               <div class="small text-muted mt-1"><em><?= nl2br(htmlspecialchars($cr['notes'])) ?></em></div>
@@ -498,7 +498,7 @@ function parseSR(string $raw): array {
             <div class="mb-2 p-2 bg-light rounded">
               <div class="d-flex justify-content-between align-items-center">
                 <?= getStatusBadge($r['action']) ?>
-                <small class="text-muted"><?= date('d M Y', strtotime($r['reviewed_at'])) ?></small>
+                <small class="text-muted"><?= date('d M Y H:i', strtotime($r['reviewed_at'])) ?></small>
               </div>
               <?php if (!empty($r['deadline_days'])): ?>
               <div class="small mt-1"><strong>Timeline:</strong> <?= (int)$r['deadline_days'] ?> day<?= $r['deadline_days'] != 1 ? 's' : '' ?></div>

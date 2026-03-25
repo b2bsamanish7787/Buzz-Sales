@@ -31,7 +31,8 @@ if (!$project) {
 
 $details = $db->fetchOne("SELECT * FROM project_details WHERE project_id=?", [$projectId]);
 $uploader = new FileUpload();
-$refFiles = $uploader->getProjectFiles($projectId, 'requirement');
+$refFiles    = $uploader->getProjectFiles($projectId, 'requirement');
+$designFiles = $uploader->getProjectFiles($projectId, 'design');
 $prevReviews = $db->fetchAll("SELECT * FROM design_reviews WHERE project_id=? ORDER BY reviewed_at DESC", [$projectId]);
 $changeRequests = $db->fetchAll("SELECT * FROM change_requests WHERE project_id=? ORDER BY created_at DESC", [$projectId]);
 foreach ($changeRequests as &$cr) {
@@ -354,6 +355,23 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
           </div>
           <?php endif; ?>
 
+          <!-- Design Files (uploaded by design team) -->
+          <?php if ($designFiles): ?>
+          <div class="form-section mt-3">
+            <div class="form-section-title"><i class="fa fa-paint-brush text-buzz"></i> Uploaded Design Files</div>
+            <?php foreach ($designFiles as $f): ?>
+            <div class="file-item">
+              <span class="badge bg-primary"><?= strtoupper(pathinfo($f['original_name'], PATHINFO_EXTENSION)) ?></span>
+              <span class="file-name"><?= htmlspecialchars($f['original_name']) ?></span>
+              <span class="file-size"><?= $uploader->formatFileSize($f['file_size'] ?? 0) ?></span>
+              <span class="text-muted small"><?= date('d M Y H:i', strtotime($f['created_at'])) ?></span>
+              <a href="../api/file-upload.php?action=view&id=<?= $f['id'] ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="View"><i class="fa fa-eye"></i> View</a>
+              <a href="../api/file-upload.php?action=download&id=<?= $f['id'] ?>" class="btn btn-sm btn-outline-primary" title="Download"><i class="fa fa-download"></i> Download</a>
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
+
           <!-- Previous Reviews -->
           <?php if ($prevReviews): ?>
           <div class="form-section mt-3">
@@ -379,7 +397,7 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
             <div class="form-section-title"><i class="fa fa-exchange-alt text-buzz"></i> Client Change Requests</div>
             <?php foreach ($changeRequests as $cr): ?>
             <div class="mb-2 p-2 bg-light rounded">
-              <div class="small fw-semibold"><?= date('d M Y', strtotime($cr['created_at'])) ?> – <?= getStatusBadge($cr['status']) ?></div>
+              <div class="small fw-semibold"><?= date('d M Y H:i', strtotime($cr['created_at'])) ?> – <?= getStatusBadge($cr['status']) ?></div>
               <div class="small mt-1"><?= nl2br(htmlspecialchars($cr['description'])) ?></div>
               <?php if (!empty($cr['notes'])): ?>
               <div class="small text-muted mt-1"><em><?= nl2br(htmlspecialchars($cr['notes'])) ?></em></div>

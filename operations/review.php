@@ -381,7 +381,7 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
               <span class="badge bg-primary"><?= strtoupper(pathinfo($f['original_name'], PATHINFO_EXTENSION)) ?></span>
               <span class="file-name"><?= htmlspecialchars($f['original_name']) ?></span>
               <span class="file-size"><?= $uploader->formatFileSize($f['file_size'] ?? 0) ?></span>
-              <span class="text-muted small"><?= date('d M Y', strtotime($f['created_at'])) ?></span>
+              <span class="text-muted small"><?= date('d M Y H:i', strtotime($f['created_at'])) ?></span>
               <a href="../api/file-upload.php?action=download&id=<?= $f['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="fa fa-download"></i></a>
             </div>
             <?php endforeach; ?>
@@ -400,7 +400,7 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
               <?php if ($r['action'] === 'on_hold' && $r['hold_duration']): ?><span><strong>Hold Duration:</strong> <?= $r['hold_duration'] ?> days</span><?php endif; ?>
               <?php if ($r['action'] === 'rejected' && $r['rejection_reason']): ?><span><strong>Rejection Reason:</strong> <?= htmlspecialchars($r['rejection_reason']) ?></span><?php endif; ?>
               <?php if ($r['remarks']): ?><span><strong>Remarks:</strong> <?= htmlspecialchars($r['remarks']) ?></span><?php endif; ?>
-              <span class="ms-auto text-muted"><?= date('d M Y', strtotime($r['reviewed_at'])) ?></span>
+              <span class="ms-auto text-muted"><?= date('d M Y H:i', strtotime($r['reviewed_at'])) ?></span>
             </div>
             <?php endforeach; ?>
           </div>
