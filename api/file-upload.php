@@ -37,6 +37,23 @@ if ($getAction === 'download') {
     exit;
 }
 
+// Handle inline file view
+if ($getAction === 'view') {
+    $fileId = (int)($_GET['id'] ?? 0);
+    if (!$fileId) { http_response_code(400); exit; }
+    $db   = Database::getInstance();
+    $file = $db->fetchOne("SELECT * FROM file_uploads WHERE id = ?", [$fileId]);
+    if (!$file || !file_exists($file['file_path'])) { http_response_code(404); echo '404 Not Found'; exit; }
+    $mime = mime_content_type($file['file_path']) ?: 'application/octet-stream';
+    $safeFilename = rawurlencode($file['original_name']);
+    header('Content-Type: ' . $mime);
+    header('Content-Disposition: inline; filename*=UTF-8\'\'' . $safeFilename);
+    header('Content-Length: ' . filesize($file['file_path']));
+    header('Cache-Control: no-cache');
+    readfile($file['file_path']);
+    exit;
+}
+
 header('Content-Type: application/json');
 
 $user       = $auth->getUser();
