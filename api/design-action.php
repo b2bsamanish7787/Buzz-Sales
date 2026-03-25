@@ -55,7 +55,7 @@ if ($action === 'design_uploaded') {
     exit;
 }
 
-if (!$projectId || !in_array($action, ['approved','rejected','on_hold'])) {
+if (!$projectId || !in_array($action, ['approved','rejected','on_hold','resume'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid request.']);
     exit;
 }
@@ -93,6 +93,13 @@ switch ($action) {
         }
         $newStatus = STATUS_ON_HOLD;
         break;
+    case 'resume':
+        if (!in_array($project['status'], [STATUS_ON_HOLD, STATUS_REJECTED])) {
+            echo json_encode(['success' => false, 'message' => 'Project cannot be resumed from its current status.']);
+            exit;
+        }
+        $newStatus = STATUS_PENDING;
+        break;
 }
 
 try {
@@ -110,6 +117,7 @@ try {
         'approved'  => "Design approved for project: '{$project['project_name']}'. Deadline: {$deadlineDays} days.",
         'rejected'  => "Design rejected for project: '{$project['project_name']}'. Reason: {$rejectionReason}",
         'on_hold'   => "Project '{$project['project_name']}' placed on hold. Reason: {$holdReason}",
+        'resume'    => "Project '{$project['project_name']}' has been resumed and is pending review.",
     ];
 
     $notifier->notifySales($project['sales_user_id'], $projectId, $messages[$action]);

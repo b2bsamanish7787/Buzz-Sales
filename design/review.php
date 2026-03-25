@@ -476,6 +476,28 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
           </form>
         </div>
       </div>
+      <?php elseif (in_array($project['status'], ['on_hold', 'rejected'])): ?>
+      <div class="col-12 col-lg-5">
+        <div class="form-section sticky-top" style="top:70px;">
+          <div class="form-section-title"><i class="fa fa-info-circle text-buzz"></i> Status</div>
+          <p><?= getStatusBadge($project['status']) ?></p>
+          <p class="text-muted small">This project is currently <?= $project['status'] === 'on_hold' ? 'on hold' : 'rejected' ?>. Resume it to restart the review cycle.</p>
+          <form id="resumeForm" novalidate>
+            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+            <input type="hidden" name="project_id" value="<?= $projectId ?>">
+            <input type="hidden" name="action" value="resume">
+            <div class="mb-3">
+              <label class="form-label">Remarks / Comments</label>
+              <textarea class="form-control" name="remarks" rows="2" placeholder="Optional notes on resuming…"></textarea>
+            </div>
+            <div id="resumeAlert"></div>
+            <button type="submit" class="btn btn-success w-100" id="resumeBtn">
+              <span class="spinner-border spinner-border-sm d-none me-2" id="resumeSpinner"></span>
+              <i class="fa fa-play-circle me-1"></i>Resume Project
+            </button>
+          </form>
+        </div>
+      </div>
       <?php else: ?>
       <div class="col-12 col-lg-5">
         <div class="form-section">
@@ -532,6 +554,24 @@ $('#reviewForm').on('submit', function(e) {
         } else {
             $('#actionAlert').html('<div class="alert alert-danger">' + (res.message || 'Error.') + '</div>');
             $('html').animate({scrollTop:0}, 400);
+        }
+    });
+});
+
+$('#resumeForm').on('submit', function(e) {
+    e.preventDefault();
+    var btn = $('#resumeBtn');
+    btn.prop('disabled', true);
+    $('#resumeSpinner').removeClass('d-none');
+
+    BuzzApp.ajax('../api/design-action.php', $(this).serialize(), function(res) {
+        btn.prop('disabled', false);
+        $('#resumeSpinner').addClass('d-none');
+        if (res.success) {
+            $('#resumeAlert').html('<div class="alert alert-success"><i class="fa fa-check-circle me-2"></i>' + res.message + '</div>');
+            setTimeout(() => window.location.href = 'dashboard.php', 2000);
+        } else {
+            $('#resumeAlert').html('<div class="alert alert-danger">' + (res.message || 'Error.') + '</div>');
         }
     });
 });
