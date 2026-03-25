@@ -396,6 +396,9 @@ $boothEng    = $sr['Booth Engagement']            ?? '';
             <div class="mb-2 p-2 rounded bg-light d-flex flex-wrap gap-3" style="font-size:.85rem;">
               <span><?= getStatusBadge($r['action']) ?></span>
               <?php if ($r['deadline_days']): ?><span><strong>Deadline:</strong> <?= $r['deadline_days'] ?> days</span><?php endif; ?>
+              <?php if ($r['action'] === 'on_hold' && $r['hold_reason']): ?><span><strong>Hold Reason:</strong> <?= htmlspecialchars($r['hold_reason']) ?></span><?php endif; ?>
+              <?php if ($r['action'] === 'on_hold' && $r['hold_duration']): ?><span><strong>Hold Duration:</strong> <?= $r['hold_duration'] ?> days</span><?php endif; ?>
+              <?php if ($r['action'] === 'rejected' && $r['rejection_reason']): ?><span><strong>Rejection Reason:</strong> <?= htmlspecialchars($r['rejection_reason']) ?></span><?php endif; ?>
               <?php if ($r['remarks']): ?><span><strong>Remarks:</strong> <?= htmlspecialchars($r['remarks']) ?></span><?php endif; ?>
               <span class="ms-auto text-muted"><?= date('d M Y', strtotime($r['reviewed_at'])) ?></span>
             </div>
