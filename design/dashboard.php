@@ -237,7 +237,7 @@ function filterBySales(array $projects, int $uid): array {
             <div class="table-card">
               <div class="table-responsive">
                 <table class="table table-hover mb-0">
-                  <thead><tr><th>#</th><th>Project</th><th>Client</th><th>Sales</th><th>Status</th><th>Date</th></tr></thead>
+                  <thead><tr><th>#</th><th>Project</th><th>Client</th><th>Sales</th><th>Status</th><th>Date</th><th></th></tr></thead>
                   <tbody>
                     <?php foreach ($tab['completed'] as $p): ?>
                     <tr>
@@ -247,6 +247,7 @@ function filterBySales(array $projects, int $uid): array {
                       <td><?= htmlspecialchars($p['sales_name'] ?? '—') ?></td>
                       <td><?= getStatusBadge($p['status']) ?></td>
                       <td class="text-muted small"><?= date('d M Y', strtotime($p['updated_at'])) ?></td>
+                      <td><a href="review.php?id=<?= $p['id'] ?>" class="btn btn-sm btn-outline-info"><i class="fa fa-eye me-1"></i>View</a></td>
                     </tr>
                     <?php endforeach; ?>
                   </tbody>
