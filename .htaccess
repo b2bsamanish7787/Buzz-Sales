@@ -1,0 +1,52 @@
+# -----------------------------------------------------------------------
+# Buzznation Client Requirement Portal – Root .htaccess
+# -----------------------------------------------------------------------
+
+# Ensure index.php is served as the directory index
+DirectoryIndex index.php
+
+# Disable directory listings site-wide
+Options -Indexes
+
+# Follow symbolic links (required by many shared-hosting setups)
+Options +FollowSymLinks
+
+# -----------------------------------------------------------------------
+# Block direct HTTP access to sensitive back-end directories.
+# PHP files inside these directories are included server-side only.
+# -----------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to config/, lib/, sql/, includes/, logs/
+    RewriteRule ^(config|lib|sql|includes|logs)(/|$) - [F,L]
+</IfModule>
+
+# -----------------------------------------------------------------------
+# PHP settings – allow large file uploads (up to 500 MB)
+# -----------------------------------------------------------------------
+<IfModule mod_php.c>
+    php_value upload_max_filesize 512M
+    php_value post_max_size 512M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 512M
+    php_value post_max_size 512M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# -----------------------------------------------------------------------
+# Security headers (Apache ≥ 2.4 with mod_headers)
+# -----------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
