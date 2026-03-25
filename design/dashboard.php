@@ -17,7 +17,7 @@ $logoutUrl = '../public/logout.php';
 $csrfToken = $auth->generateCSRFToken();
 
 // Fetch all three status buckets (with sales_uid for grouping)
-$pending   = $db->fetchAll("SELECT p.*, u.full_name as sales_name, u.id as sales_uid FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id WHERE p.status IN ('pending','change_requested') ORDER BY p.created_at ASC");
+$pending   = $db->fetchAll("SELECT p.*, u.full_name as sales_name, u.id as sales_uid FROM projects p LEFT JOIN users u ON p.sales_user_id=u.id WHERE p.status IN ('pending','change_requested','on_hold','rejected') ORDER BY p.created_at ASC");
 $ongoing   = $db->fetchAll("
     SELECT p.*, u.full_name as sales_name, u.id as sales_uid, dr.deadline_days, dr.reviewed_at
     FROM projects p
