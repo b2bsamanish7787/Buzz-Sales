@@ -131,9 +131,9 @@ if ($isExport) {
             $r['id'],
             $r['project_name'],
             $r['client_name'],
-            $r['sales_name'] ?? '—',
+            $r['sales_name'] ?? '-',
             ucwords(str_replace('_', ' ', $r['status'])),
-            $r['last_review_action'] ? ucwords(str_replace('_', ' ', $r['last_review_action'])) : '—',
+            $r['last_review_action'] ? ucwords(str_replace('_', ' ', $r['last_review_action'])) : '-',
             $r['last_review_remarks'] ?? '',
             $r['created_at'] ? date('d M Y', strtotime($r['created_at'])) : '',
             $r['updated_at'] ? date('d M Y', strtotime($r['updated_at'])) : '',
@@ -184,7 +184,7 @@ function sortLink(string $col, string $currentCol, string $currentDir): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design Reports – <?= APP_NAME ?></title>
+<title>Design Reports &ndash; <?= APP_NAME ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <link rel="stylesheet" href="../public/css/style.css">
@@ -276,7 +276,7 @@ th.sortable { white-space:nowrap; }
         <div class="col-12 col-sm-6 col-md-3 col-xl-2">
           <label>Search</label>
           <input type="text" name="search" class="form-control form-control-sm"
-                 placeholder="Project or Client…"
+                 placeholder="Project or Client..."
                  value="<?= htmlspecialchars($fSearch) ?>">
         </div>
 
@@ -338,14 +338,14 @@ th.sortable { white-space:nowrap; }
               } elseif ($ra === 'on_hold') {
                   $reviewBadge = '<span class="badge badge-review-on_hold">On Hold</span>';
               } else {
-                  $reviewBadge = '<span class="badge badge-review-none">—</span>';
+                  $reviewBadge = '<span class="badge badge-review-none">&mdash;</span>';
               }
             ?>
             <tr>
               <td><?= $r['id'] ?></td>
               <td class="fw-semibold"><?= htmlspecialchars($r['project_name']) ?></td>
               <td><?= htmlspecialchars($r['client_name']) ?></td>
-              <td><?= htmlspecialchars($r['sales_name'] ?? '—') ?></td>
+              <td><?= htmlspecialchars($r['sales_name'] ?? '-') ?></td>
               <td><?= $stageBadge ?></td>
               <td>
                 <?= $reviewBadge ?>
@@ -380,7 +380,7 @@ th.sortable { white-space:nowrap; }
           $rangeStart = max(1, $page - 3);
           $rangeEnd   = min($pages, $page + 3);
           if ($rangeStart > 1): ?>
-          <li class="page-item disabled"><span class="page-link">…</span></li>
+          <li class="page-item disabled"><span class="page-link">&#8230;</span></li>
         <?php endif;
           for ($pg = $rangeStart; $pg <= $rangeEnd; $pg++): ?>
           <li class="page-item <?= $pg === $page ? 'active' : '' ?>">
@@ -388,14 +388,14 @@ th.sortable { white-space:nowrap; }
           </li>
         <?php endfor;
           if ($rangeEnd < $pages): ?>
-          <li class="page-item disabled"><span class="page-link">…</span></li>
+          <li class="page-item disabled"><span class="page-link">&#8230;</span></li>
         <?php endif; ?>
         <li class="page-item <?= $page >= $pages ? 'disabled' : '' ?>">
           <a class="page-link" href="<?= htmlspecialchars(reportUrl(['page' => $page + 1])) ?>">Next ›</a>
         </li>
       </ul>
       <p class="text-center text-muted small">
-        Showing <?= (($page - 1) * $perPage) + 1 ?>–<?= min($page * $perPage, $total) ?> of <?= $total ?> projects
+        Showing <?= (($page - 1) * $perPage) + 1 ?>&ndash;<?= min($page * $perPage, $total) ?> of <?= $total ?> projects
       </p>
     </nav>
     <?php endif; ?>
